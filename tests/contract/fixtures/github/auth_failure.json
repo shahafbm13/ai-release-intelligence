@@ -1,0 +1,24 @@
+{
+  "action": "completed",
+  "workflow_run": {
+    "id": 123456791,
+    "name": "CI",
+    "head_branch": "develop",
+    "head_sha": "deadbeef0000000000000000000000000002",
+    "conclusion": "failure",
+    "html_url": "https://github.com/acme/e2e-automation/actions/runs/123456791",
+    "repository": { "full_name": "acme/e2e-automation" }
+  },
+  "repository": { "full_name": "acme/e2e-automation" },
+  "test_failures": [
+    {
+      "test_name": "test_api_requires_auth",
+      "suite_name": "tests.api.auth",
+      "error_type": "HTTPError",
+      "error_message": "401 Unauthorized: token expired",
+      "stack_trace": "HTTPError: 401 Unauthorized",
+      "log_excerpt": "Authorization: Bearer expired-token",
+      "retry_number": 0
+    }
+  ]
+}
