@@ -1,0 +1,64 @@
+# Render blueprint (starter — adjust names/URLs before deploy)
+services:
+  - type: web
+    name: release-intel-api
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    plan: free
+    healthCheckPath: /ready
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: CELERY_RESULT_BACKEND
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    buildCommand: pip install -e ".[dev]" && alembic -c migrations/alembic.ini upgrade head && python -m api.seed
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+
+  - type: worker
+    name: release-intel-worker
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: release-intel-api
+          envVarKey: DATABASE_URL
+      - key: REDIS_URL
+        fromService:
+          type: web
+          name: release-intel-api
+          envVarKey: REDIS_URL
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: web
+          name: release-intel-api
+          envVarKey: CELERY_BROKER_URL
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: web
+          name: release-intel-api
+          envVarKey: CELERY_RESULT_BACKEND
+    startCommand: celery -A worker.celery_app worker --loglevel=info
+
+  - type: web
+    name: release-intel-web
+    runtime: node
+    plan: free
+    rootDir: apps/web
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
